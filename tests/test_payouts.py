@@ -31,6 +31,31 @@ def test_payout_is_capped_at_coverage_limit():
     assert calculate_payout(claim) == 10_000.0
 
 
+def test_multi_line_claim_applies_deductible_once():
+    """Regression: CLM-20817 — deductible must be subtracted once on the claim total."""
+    claim = Claim(
+        "CLM-20817",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [
+            LineItem("Item A", 420.0),
+            LineItem("Item B", 380.0),
+            LineItem("Item C", 150.0),
+        ],
+    )
+    assert calculate_payout(claim) == 450.0
+
+
+def test_payout_is_zero_when_damages_below_deductible():
+    claim = Claim(
+        "CLM-4",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [LineItem("Minor scratch", 200.0), LineItem("Small dent", 150.0)],
+    )
+    assert calculate_payout(claim) == 0.0
+
+
 def test_disbursement_rejects_negative_amounts():
     with pytest.raises(DisbursementError):
         issue_payment("CLM-3", -10.0)
