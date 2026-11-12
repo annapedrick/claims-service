@@ -21,6 +21,32 @@ def test_single_line_item_subtracts_deductible():
     assert calculate_payout(claim) == 1_500.0
 
 
+def test_deductible_applied_once_per_claim_not_per_line_item():
+    """Regression: multi-item claims must not subtract deductible from each line item."""
+    claim = Claim(
+        "CLM-20817",
+        make_policy(deductible=500.0),
+        date(2026, 11, 3),
+        [
+            LineItem("Drywall repair", 420.0),
+            LineItem("Carpet replacement", 380.0),
+            LineItem("Dehumidifier rental", 150.0),
+        ],
+    )
+    # 950 total damages minus 500 deductible once = 450 (not -550 when deducted per item).
+    assert calculate_payout(claim) == 450.0
+
+
+def test_payout_is_zero_when_damages_below_deductible():
+    claim = Claim(
+        "CLM-4",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [LineItem("Minor scratch", 200.0), LineItem("Touch-up paint", 150.0)],
+    )
+    assert calculate_payout(claim) == 0.0
+
+
 def test_payout_is_capped_at_coverage_limit():
     claim = Claim(
         "CLM-2",
