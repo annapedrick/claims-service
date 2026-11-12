@@ -14,5 +14,8 @@ def calculate_payout(claim: Claim) -> float:
     """
     total = 0.0
     for item in claim.line_items:
-        total += item.amount - claim.policy.deductible
-    return round(min(total, claim.policy.coverage_limit), 2)
+        total += item.amount
+    payout = total - claim.policy.deductible
+    if payout < 0:
+        payout = 0.0
+    return round(min(payout, claim.policy.coverage_limit), 2)

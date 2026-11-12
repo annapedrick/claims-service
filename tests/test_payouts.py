@@ -21,6 +21,33 @@ def test_single_line_item_subtracts_deductible():
     assert calculate_payout(claim) == 1_500.0
 
 
+def test_deductible_applied_once_per_claim_not_per_line_item():
+    """Regression: deductible must be subtracted once after summing line items, floored at 0."""
+    claim = Claim(
+        "CLM-8795",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [
+            LineItem("Item A", 225.0),
+            LineItem("Item B", 225.0),
+        ],
+    )
+    assert calculate_payout(claim) == 0.0
+
+
+def test_multiple_line_items_subtract_deductible_once():
+    claim = Claim(
+        "CLM-4",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [
+            LineItem("Drywall", 800.0),
+            LineItem("Paint", 400.0),
+        ],
+    )
+    assert calculate_payout(claim) == 700.0
+
+
 def test_payout_is_capped_at_coverage_limit():
     claim = Claim(
         "CLM-2",
