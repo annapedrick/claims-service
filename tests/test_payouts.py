@@ -21,6 +21,21 @@ def test_single_line_item_subtracts_deductible():
     assert calculate_payout(claim) == 1_500.0
 
 
+def test_deductible_applied_once_per_claim_not_per_line_item():
+    """Regression for CLM-12179: per-line deductible subtraction produced -550.00."""
+    claim = Claim(
+        "CLM-12179",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [
+            LineItem("Item A", 450.0),
+            LineItem("Item B", 250.0),
+            LineItem("Item C", 250.0),
+        ],
+    )
+    assert calculate_payout(claim) == 450.0
+
+
 def test_payout_is_capped_at_coverage_limit():
     claim = Claim(
         "CLM-2",

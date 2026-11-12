@@ -12,7 +12,7 @@ def calculate_payout(claim: Claim) -> float:
       * The payout is never negative: if damages are below the deductible, payout is 0.
       * The payout is capped at the policy's coverage limit.
     """
-    total = 0.0
-    for item in claim.line_items:
-        total += item.amount - claim.policy.deductible
-    return round(min(total, claim.policy.coverage_limit), 2)
+    total = sum(item.amount for item in claim.line_items)
+    after_deductible = total - claim.policy.deductible
+    payout = max(0.0, after_deductible)
+    return round(min(payout, claim.policy.coverage_limit), 2)
