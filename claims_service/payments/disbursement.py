@@ -18,7 +18,7 @@ def select_payment_method(amount: float) -> str:
     """Choose how to send a payout: ACH up to WIRE_THRESHOLD, wire transfer above it."""
     if amount <= WIRE_THRESHOLD:
         return "ach"
-    raise PaymentMethodError(f"No payment method available for amount {amount:.2f}")
+    return "wire"
 
 
 def issue_payment(claim_id: str, amount: float) -> dict:

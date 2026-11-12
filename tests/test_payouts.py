@@ -3,7 +3,12 @@ from datetime import date
 import pytest
 
 from claims_service.models import Claim, LineItem, Policy
-from claims_service.payments.disbursement import DisbursementError, issue_payment
+from claims_service.payments.disbursement import (
+    DisbursementError,
+    WIRE_THRESHOLD,
+    issue_payment,
+    select_payment_method,
+)
 from claims_service.payouts import calculate_payout
 
 
@@ -34,3 +39,19 @@ def test_payout_is_capped_at_coverage_limit():
 def test_disbursement_rejects_negative_amounts():
     with pytest.raises(DisbursementError):
         issue_payment("CLM-3", -10.0)
+
+
+def test_select_payment_method_ach_at_or_below_wire_threshold():
+    assert select_payment_method(WIRE_THRESHOLD) == "ach"
+    assert select_payment_method(5_000.0) == "ach"
+
+
+def test_select_payment_method_wire_above_wire_threshold():
+    assert select_payment_method(17_000.0) == "wire"
+
+
+def test_issue_payment_schedules_wire_for_large_amounts():
+    result = issue_payment("CLM-4", 17_000.0)
+    assert result["method"] == "wire"
+    assert result["amount"] == 17_000.0
+    assert result["status"] == "scheduled"
