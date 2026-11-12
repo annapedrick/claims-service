@@ -3,8 +3,11 @@
 This is a claims-processing service for an insurance carrier. Mistakes here move real money.
 
 ## Hard rules
-- Never modify anything under `claims_service/payments/`. It is human-owned code.
-  If a fix seems to require changing it, stop and explain why in your summary instead.
+- `claims_service/payments/` is protected, human-owned code. Do not modify it unless your
+  task explicitly says "AUTHORIZATION FOR THIS TASK" for protected code. Without that, stop
+  and explain why in your summary instead.
+- When you are authorized, the change is a draft for the owning team: make the smallest
+  possible change, say clearly in the PR that it needs owner review, and never merge it.
 - Never weaken or delete existing tests to make a change pass.
 - Never log or hardcode policyholder data (names, policy numbers, emails, phone numbers).
 
