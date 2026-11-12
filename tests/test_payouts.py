@@ -31,6 +31,25 @@ def test_payout_is_capped_at_coverage_limit():
     assert calculate_payout(claim) == 10_000.0
 
 
+def test_deductible_applied_once_for_multiple_line_items():
+    """Regression: deductible must not be subtracted per line item (CLM-18390)."""
+    claim = Claim(
+        "CLM-18390",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [LineItem("Drywall", 225.0), LineItem("Flooring", 225.0)],
+    )
+    assert calculate_payout(claim) == 0.0
+
+    claim_with_payout = Claim(
+        "CLM-4",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [LineItem("Roof", 1_500.0), LineItem("Siding", 1_500.0)],
+    )
+    assert calculate_payout(claim_with_payout) == 2_500.0
+
+
 def test_disbursement_rejects_negative_amounts():
     with pytest.raises(DisbursementError):
         issue_payment("CLM-3", -10.0)
