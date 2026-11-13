@@ -3,7 +3,12 @@ from datetime import date
 import pytest
 
 from claims_service.models import Claim, LineItem, Policy
-from claims_service.payments.disbursement import DisbursementError, issue_payment
+from claims_service.payments.disbursement import (
+    DisbursementError,
+    WIRE_THRESHOLD,
+    issue_payment,
+    select_payment_method,
+)
 from claims_service.payouts import calculate_payout
 
 
@@ -34,3 +39,22 @@ def test_payout_is_capped_at_coverage_limit():
 def test_disbursement_rejects_negative_amounts():
     with pytest.raises(DisbursementError):
         issue_payment("CLM-3", -10.0)
+
+
+def test_select_payment_method_uses_ach_up_to_wire_threshold():
+    assert select_payment_method(WIRE_THRESHOLD) == "ach"
+
+
+def test_select_payment_method_uses_wire_above_wire_threshold():
+    # Regression for incident fingerprint 4bfc8f02938a: $17k payouts failed in production.
+    assert select_payment_method(17_000.00) == "wire"
+
+
+def test_issue_payment_schedules_wire_for_amount_above_threshold():
+    result = issue_payment("CLM-4", 17_000.00)
+    assert result == {
+        "claim_id": "CLM-4",
+        "amount": 17_000.00,
+        "method": "wire",
+        "status": "scheduled",
+    }
