@@ -21,6 +21,31 @@ def test_single_line_item_subtracts_deductible():
     assert calculate_payout(claim) == 1_500.0
 
 
+def test_deductible_applied_once_per_claim_not_per_line_item():
+    """Regression for CLM-87178: multiple small items must sum before deductible."""
+    claim = Claim(
+        "CLM-87178",
+        make_policy(deductible=500.0),
+        date(2026, 11, 3),
+        [
+            LineItem("Drywall repair", 420.0),
+            LineItem("Carpet replacement", 380.0),
+            LineItem("Dehumidifier rental", 150.0),
+        ],
+    )
+    assert calculate_payout(claim) == 450.0
+
+
+def test_payout_floors_at_zero_when_damages_below_deductible():
+    claim = Claim(
+        "CLM-4",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [LineItem("Minor scratch", 200.0)],
+    )
+    assert calculate_payout(claim) == 0.0
+
+
 def test_payout_is_capped_at_coverage_limit():
     claim = Claim(
         "CLM-2",
