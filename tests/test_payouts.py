@@ -34,3 +34,30 @@ def test_payout_is_capped_at_coverage_limit():
 def test_disbursement_rejects_negative_amounts():
     with pytest.raises(DisbursementError):
         issue_payment("CLM-3", -10.0)
+
+
+def test_deductible_applied_once_per_claim_not_per_line_item():
+    """Regression: per-item deductible subtraction produced negative payouts (e.g. CLM-35204)."""
+    claim = Claim(
+        "CLM-35204",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [
+            LineItem("Item A", 225.0),
+            LineItem("Item B", 225.0),
+        ],
+    )
+    assert calculate_payout(claim) == 0.0
+
+
+def test_multiple_line_items_subtract_deductible_once_after_sum():
+    claim = Claim(
+        "CLM-4",
+        make_policy(deductible=500.0),
+        date(2026, 1, 5),
+        [
+            LineItem("Part one", 1_200.0),
+            LineItem("Part two", 800.0),
+        ],
+    )
+    assert calculate_payout(claim) == 1_500.0
