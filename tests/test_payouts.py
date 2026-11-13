@@ -21,6 +21,21 @@ def test_single_line_item_subtracts_deductible():
     assert calculate_payout(claim) == 1_500.0
 
 
+def test_deductible_applied_once_when_multiple_items_each_below_deductible():
+    """Regression for CLM-81004: per-item deduction produced -550 and blocked disbursement."""
+    claim = Claim(
+        "CLM-81004",
+        make_policy(deductible=500.0),
+        date(2026, 11, 3),
+        [
+            LineItem("Drywall repair", 420.0),
+            LineItem("Carpet replacement", 380.0),
+            LineItem("Dehumidifier rental", 150.0),
+        ],
+    )
+    assert calculate_payout(claim) == 450.0
+
+
 def test_payout_is_capped_at_coverage_limit():
     claim = Claim(
         "CLM-2",
