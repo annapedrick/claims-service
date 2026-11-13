@@ -21,6 +21,22 @@ def test_single_line_item_subtracts_deductible():
     assert calculate_payout(claim) == 1_500.0
 
 
+def test_deductible_applied_once_per_claim_not_per_line_item():
+    """Regression: CLM-79880 — three items under $500 deductible summed to -550 payout."""
+    claim = Claim(
+        "CLM-79880",
+        make_policy(deductible=500.0),
+        date(2026, 11, 3),
+        [
+            LineItem("Drywall repair", 420.0),
+            LineItem("Carpet replacement", 380.0),
+            LineItem("Dehumidifier rental", 150.0),
+        ],
+    )
+    # Total damages 950; deductible once → 450 (never negative).
+    assert calculate_payout(claim) == 450.0
+
+
 def test_payout_is_capped_at_coverage_limit():
     claim = Claim(
         "CLM-2",
